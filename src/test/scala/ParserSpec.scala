@@ -10,30 +10,49 @@ import matchers._
 import java.io.InputStream
 import scala.io.Source
 
-class ParserSpec extends AnyFlatSpec with should.Matchers {
+class ParserSpec extends AnyFlatSpec
+    with should.Matchers
+    with BeforeAndAfterAll {
 
-    implicit val runtime = cats.effect.unsafe.IORuntime.global
+    var is1: InputStream = null
+    var wav1: WavHeader = null
+    var is2: InputStream = null
+    var wav2: WavHeader = null
+
+    override protected def beforeAll(): Unit = {
+        is1 = readFile("/sample1.wav")
+        wav1 = Parser.wavHeaderParser(is1)
+        is2 = readFile("/sample2.wav")
+        wav2 = Parser.wavHeaderParser(is2)
+    }
+
+    override protected def afterAll(): Unit = {
+        is1.close()
+        is2.close()
+    }
 
     def readFile(fileName : String) : InputStream = 
         getClass().getResourceAsStream(fileName)
 
     it should "Read Riff Header" in {
-        val is = readFile("/sample1.wav")
-        val wav: WavHeader = Parser.wavHeaderParser(is)
-        wav.riff should be("RIFF")
-        is.close()
+        wav1.riff should be("RIFF")
     }
 
     it should "Read Size Header" in {
-        val is1 = readFile("/sample1.wav")
-        val wav1: WavHeader = Parser.wavHeaderParser(is1)
         wav1.size should be( 1073210 )
-        is1.close()
-
-        val is2 = readFile("/sample2.wav")
-        val wav2: WavHeader = Parser.wavHeaderParser(is2)
         wav2.size should be( 2146158 )
-        is2.close()
+    }
+
+    it should "Read WAVE Header" in {
+        wav1.wave should be("WAVE")
+    }
+
+    it should "Read FMT Header" in {
+        wav1.fmt should be("fmt")
+    }
+
+    it should "Read FMT Size" in {
+        wav1.fmtSize should be(16)
     }
 
 }

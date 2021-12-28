@@ -3,8 +3,15 @@ package com.pako.wav
 
 case class WavHeader (
     riff: String,
-    size: Int
+    size: Int,
+    wave: String,
+    fmt: String,
+    fmtSize: Int
 )
+
+object WavHeader {
+    def empty() = WavHeader("", -1, "", "", -1)
+}
 
 /*
 case class WavHeader(
