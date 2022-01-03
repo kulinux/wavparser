@@ -65,4 +65,24 @@ class ParserSpec extends AnyFlatSpec
         wav1.numChannels should be (Stereo)
     }
 
+    it should "Read Sample Rate" in {
+        wav1.sampleRate should be (8000)
+    }
+
+    it should "Read Byte Rate" in {
+        wav1.byteRate should be (32000)
+    }
+
+    it should "Read Block Align" in {
+        wav1.blockAlign should be (4)
+    }
+
+    it should "Read Bits Per Sample" in {
+        wav1.bitsPerSample should be (16)
+    }
+
+    it should "Read Extra Params" in {
+        wav1.extraParam shouldBe empty 
+    }
+
 }

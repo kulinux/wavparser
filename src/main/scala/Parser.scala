@@ -41,7 +41,11 @@ object Parser {
         HeaderProtocolEntry[WavHeader, String](4, toStr, (wh, in) => wh.copy(fmt = in.trim())) andThen
         HeaderProtocolEntry[WavHeader, Int](4, toInt, (wh, in) => wh.copy(fmtSize = in)) andThen
         HeaderProtocolEntry[WavHeader, Int](2, toInt, (wh, in) => wh.copy(audioFormat = in)) andThen
-        HeaderProtocolEntry[WavHeader, Int](2, toInt, (wh, in) => wh.copy(numChannels = in)) 
+        HeaderProtocolEntry[WavHeader, Int](2, toInt, (wh, in) => wh.copy(numChannels = in)) andThen
+        HeaderProtocolEntry[WavHeader, Int](4, toInt, (wh, in) => wh.copy(sampleRate = in)) andThen
+        HeaderProtocolEntry[WavHeader, Int](4, toInt, (wh, in) => wh.copy(byteRate = in)) andThen
+        HeaderProtocolEntry[WavHeader, Int](2, toInt, (wh, in) => wh.copy(blockAlign = in)) andThen
+        HeaderProtocolEntry[WavHeader, Int](2, toInt, (wh, in) => wh.copy(bitsPerSample = in)) 
     )
 
     def wavHeaderParser(is: InputStream) : WavHeader = {
