@@ -1,16 +1,24 @@
 package com.pako.wav
 
-
 case class WavHeader (
     riff: String,
     size: Int,
     wave: String,
     fmt: String,
-    fmtSize: Int
+    fmtSize: Int,
+    audioFormat: Int,
+    numChannels: Int
 )
 
 object WavHeader {
-    def empty() = WavHeader("", -1, "", "", -1)
+    //Audio Types
+    val PCM = 1
+
+    //Num Channels
+    val Mono = 1
+    val Stereo = 2
+
+    def empty() = WavHeader("", -1, "", "", -1, -1, -1)
 }
 
 /*

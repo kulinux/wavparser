@@ -10,6 +10,8 @@ import matchers._
 import java.io.InputStream
 import scala.io.Source
 
+import WavHeader._
+
 class ParserSpec extends AnyFlatSpec
     with should.Matchers
     with BeforeAndAfterAll {
@@ -53,6 +55,14 @@ class ParserSpec extends AnyFlatSpec
 
     it should "Read FMT Size" in {
         wav1.fmtSize should be(16)
+    }
+
+    it should "Read Audio Format" in {
+        wav1.audioFormat should be (PCM)
+    }
+
+    it should "Read Num of Channels" in {
+        wav1.numChannels should be (Stereo)
     }
 
 }

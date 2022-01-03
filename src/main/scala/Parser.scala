@@ -34,12 +34,15 @@ case class HeaderProtocolEntry[CLS, T](bToRead: Int, parserFunc: Array[Byte] => 
 
 object Parser {
 
-    private val waveHeaderProtocol = 
+    private val waveHeaderProtocol = (
         HeaderProtocolEntry[WavHeader, String](4, toStr, (wh, in) => wh.copy(riff = in)) andThen
         HeaderProtocolEntry[WavHeader, Int](4, toInt, (wh, in) => wh.copy(size = in)) andThen
         HeaderProtocolEntry[WavHeader, String](4, toStr, (wh, in) => wh.copy(wave = in)) andThen
         HeaderProtocolEntry[WavHeader, String](4, toStr, (wh, in) => wh.copy(fmt = in.trim())) andThen
-        HeaderProtocolEntry[WavHeader, Int](4, toInt, (wh, in) => wh.copy(fmtSize = in)) 
+        HeaderProtocolEntry[WavHeader, Int](4, toInt, (wh, in) => wh.copy(fmtSize = in)) andThen
+        HeaderProtocolEntry[WavHeader, Int](2, toInt, (wh, in) => wh.copy(audioFormat = in)) andThen
+        HeaderProtocolEntry[WavHeader, Int](2, toInt, (wh, in) => wh.copy(numChannels = in)) 
+    )
 
     def wavHeaderParser(is: InputStream) : WavHeader = {
         val res = WavHeader.empty()
@@ -49,7 +52,21 @@ object Parser {
 
     private def toStr(arr: Array[Byte]): String = return new String(arr)
 
-    private def toInt(arr: Array[Byte]): Int = ByteBuffer.wrap(arr).order(java.nio.ByteOrder.LITTLE_ENDIAN).getInt()
+    private def toHex(bytes: Array[Byte]): String = {
+        val result = new StringBuilder();
+        for (temp <- bytes) {
+            result.append(String.format("%02x", temp));
+        }
+        result.toString();
+    }
+
+
+    private def toInt(arr: Array[Byte]): Int = {
+        val bArr: Array[Byte] = Array(0x00, 0x00, 0x00, 0x00)
+        Array.copy(arr, 0, bArr, 0, arr.size)
+        //println(toHex(arr) + " -> " + toHex(bArr))
+        ByteBuffer.wrap(bArr).order(java.nio.ByteOrder.LITTLE_ENDIAN).getInt()
+    }
 
 
 }
