@@ -20,17 +20,22 @@ class ParserSpec extends AnyFlatSpec
     var wav1: WavHeader = null
     var is2: InputStream = null
     var wav2: WavHeader = null
+    var is3: InputStream = null
+    var wav3: WavHeader = null
 
     override protected def beforeAll(): Unit = {
         is1 = readFile("/sample1.wav")
         wav1 = Parser.wavHeaderParser(is1)
         is2 = readFile("/sample2.wav")
         wav2 = Parser.wavHeaderParser(is2)
+        is3 = readFile("/sample3.wav")
+        wav3 = Parser.wavHeaderParser(is3)
     }
 
     override protected def afterAll(): Unit = {
         is1.close()
         is2.close()
+        is3.close()
     }
 
     def readFile(fileName : String) : InputStream = 
@@ -82,7 +87,7 @@ class ParserSpec extends AnyFlatSpec
     }
 
     it should "Read Extra Params" in {
-        wav1.extraParam shouldBe empty 
+        wav3.extraParam shouldBe defined 
     }
 
 }
