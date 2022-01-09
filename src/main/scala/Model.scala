@@ -12,7 +12,7 @@ object WavHeader {
     val Stereo: NumChannel = 2
     
     def empty() = WavHeader("", -1, "", "", -1, -1, -1, -1, -1, -1, -1,
-        Option.empty[FmtExtraParam])
+        Option.empty[FmtExtraParam], "", -1, Array[Byte]())
 }
 
 case class FmtExtraParam (size: Int, extraParam: Array[Byte]) 
@@ -29,6 +29,9 @@ case class WavHeader (
     byteRate: Int,
     blockAlign: Int,
     bitsPerSample: Int,
-    extraParam: Option[FmtExtraParam]
+    extraParam: Option[FmtExtraParam],
+    data: String,
+    dataSize: Int,
+    dataContent: Array[Byte]
 )
 

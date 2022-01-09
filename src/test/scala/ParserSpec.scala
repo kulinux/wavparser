@@ -90,4 +90,9 @@ class ParserSpec extends AnyFlatSpec
         wav3.extraParam shouldBe defined 
     }
 
+    it should "Read Data Header" in {
+        wav1.data should be("data")
+        wav3.data should be("data")
+    }
+
 }

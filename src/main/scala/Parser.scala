@@ -3,16 +3,12 @@ package com.pako.wav
 import java.io.InputStream
 import java.nio.ByteBuffer
 
-import cats._
-import cats.data._
-import cats.implicits._
-
 
 trait HeaderProtocolEntry { self =>
-    def readAndParse(wph: WavHeader, read: Int => Array[Byte]): WavHeader
+    def readAndParse(wph: WavHeader, read: InputStream): WavHeader
 
     def andThen(other: HeaderProtocolEntry): HeaderProtocolEntry = new HeaderProtocolEntry {
-        def readAndParse(wph: WavHeader, read: Int => Array[Byte]): WavHeader = {
+        def readAndParse(wph: WavHeader, read: InputStream): WavHeader = {
             val owph = self.readAndParse(wph, read)
             other.readAndParse(owph, read)
         }
@@ -20,15 +16,44 @@ trait HeaderProtocolEntry { self =>
 }
 
 case class HeaderProtocolEntryFixed[T](size: Int, parse: Array[Byte] => T, copy: (WavHeader, T) => WavHeader) extends HeaderProtocolEntry {
-    def readAndParse(wph: WavHeader, read: Int => Array[Byte]): WavHeader = copy(wph, parse(read(size)))
+    def readAndParse(wph: WavHeader, read: InputStream): WavHeader = copy(wph, parse(read.readNBytes(size)))
 }
 
 class FmtExtraParamParser extends HeaderProtocolEntry {
-    def readAndParse(wph: WavHeader, read: Int => Array[Byte]): WavHeader = {
+    def readAndParse(wph: WavHeader, read: InputStream): WavHeader = {
         if(wph.audioFormat == WavHeader.PCM) return wph
-        val size = Parser.toInt(read(2))
-        val data = read(size)
+        val size = Parser.toInt(read.readNBytes(2))
+        val data = read.readNBytes(size)
         wph.copy(extraParam = Some(FmtExtraParam(size, data)))
+    }
+}
+
+class DiscardUnknownChunks extends HeaderProtocolEntry {
+    def readAndParse(wph: WavHeader, read: InputStream): WavHeader = {
+        read.mark(100)
+        val chunkId = Parser.toStr(read.readNBytes(4))
+        val chunkSize = Parser.toInt(read.readNBytes(4))
+        if(chunkId.equals("data")) {
+            read.reset()
+            return wph
+        }
+        read.readNBytes(chunkSize)
+        return wph
+    }
+}
+
+class DataParser extends HeaderProtocolEntry {
+    def readAndParse(wph: WavHeader, read: InputStream): WavHeader = {
+        read.mark(100)
+        val chunkId = Parser.toStr(read.readNBytes(4))
+        val chunkSize = Parser.toInt(read.readNBytes(4))
+        if(chunkId.equals("data")) {
+            return wph.copy(data = chunkId,
+                            dataSize = chunkSize,
+                            dataContent = read.readNBytes(chunkSize))
+        }
+        read.reset()
+        return wph
     }
 }
 
@@ -46,7 +71,10 @@ object Parser {
         HeaderProtocolEntryFixed[Int](4, toInt, (wh, in) => wh.copy(byteRate = in)) andThen
         HeaderProtocolEntryFixed[Int](2, toInt, (wh, in) => wh.copy(blockAlign = in)) andThen
         HeaderProtocolEntryFixed[Int](2, toInt, (wh, in) => wh.copy(bitsPerSample = in)) andThen
-        new FmtExtraParamParser()
+        new FmtExtraParamParser() andThen
+        new DiscardUnknownChunks() andThen
+        new DataParser()
+
     )
 
     def toStr(arr: Array[Byte]): String = return new String(arr)
@@ -59,7 +87,7 @@ object Parser {
 
     def wavHeaderParser(is: InputStream) : WavHeader = {
         val res = WavHeader.empty()
-        val res3 = waveHeaderProtocol.readAndParse(res, is.readNBytes)
+        val res3 = waveHeaderProtocol.readAndParse(res, is)
         res3
     }
 
