@@ -74,7 +74,6 @@ object Parser {
         new FmtExtraParamParser() andThen
         new DiscardUnknownChunks() andThen
         new DataParser()
-
     )
 
     def toStr(arr: Array[Byte]): String = return new String(arr)

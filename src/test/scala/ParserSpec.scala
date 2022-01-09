@@ -1,8 +1,5 @@
 package com.pako.wav
 
-import cats.Id
-import cats.implicits._
-
 import org.scalatest._
 import flatspec._
 import matchers._
