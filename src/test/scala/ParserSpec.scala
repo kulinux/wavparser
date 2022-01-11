@@ -51,45 +51,37 @@ class ParserSpec extends AnyFlatSpec
         wav1.wave should be("WAVE")
     }
 
-    it should "Read FMT Header" in {
-        wav1.fmt should be("fmt")
-    }
-
-    it should "Read FMT Size" in {
-        wav1.fmtSize should be(16)
-    }
-
     it should "Read Audio Format" in {
-        wav1.audioFormat should be (PCM)
+        wav1.fmt.audioFormat should be (PCM)
     }
 
     it should "Read Num of Channels" in {
-        wav1.numChannels should be (Stereo)
+        wav1.fmt.numChannels should be (Stereo)
     }
 
     it should "Read Sample Rate" in {
-        wav1.sampleRate should be (8000)
+        wav1.fmt.sampleRate should be (8000)
     }
 
     it should "Read Byte Rate" in {
-        wav1.byteRate should be (32000)
+        wav1.fmt.byteRate should be (32000)
     }
 
     it should "Read Block Align" in {
-        wav1.blockAlign should be (4)
+        wav1.fmt.blockAlign should be (4)
     }
 
     it should "Read Bits Per Sample" in {
-        wav1.bitsPerSample should be (16)
+        wav1.fmt.bitsPerSample should be (16)
     }
 
     it should "Read Extra Params" in {
-        wav3.extraParam shouldBe defined 
+        wav3.fmt.extraParam shouldBe defined 
     }
 
     it should "Read Data Header" in {
-        wav1.data should be("data")
-        wav3.data should be("data")
+        wav1.data.data.size should be > 0
+        wav3.data.data.size should be > 0
     }
 
 }
