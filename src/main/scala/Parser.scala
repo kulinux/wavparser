@@ -54,21 +54,32 @@ class DataParser extends HeaderProtocolEntry[WavHeader] {
     }
 }
 
+class ComposeProtocolEntry[CLS](child: HeaderProtocolEntry[CLS], empty: CLS, compose: (WavHeader, CLS) => WavHeader)
+                                                    extends HeaderProtocolEntry[WavHeader] {
+    def readAndParse(wph: WavHeader, read: InputStream): WavHeader = {
+        val res: CLS = child.readAndParse(empty, read)
+        compose(wph, res)
+    }
+}
+
 
 object Parser {
+    private val fmtHeaderProtol: HeaderProtocolEntry[FmtHeader] = (
+        HeaderProtocolEntryFixed[FmtHeader, String](4, toStr, (fmt, in) => fmt.copy(fmt = in.trim())) andThen
+        HeaderProtocolEntryFixed[FmtHeader, Int](4, toInt, (fmt, in) => fmt.copy(fmtSize = in)) andThen
+        HeaderProtocolEntryFixed[FmtHeader, Int](2, toInt, (fmt, in) => fmt.copy(audioFormat = in)) andThen
+        HeaderProtocolEntryFixed[FmtHeader, Int](2, toInt, (fmt, in) => fmt.copy(numChannels = in)) andThen
+        HeaderProtocolEntryFixed[FmtHeader, Int](4, toInt, (fmt, in) => fmt.copy(sampleRate = in)) andThen
+        HeaderProtocolEntryFixed[FmtHeader, Int](4, toInt, (fmt, in) => fmt.copy(byteRate = in)) andThen
+        HeaderProtocolEntryFixed[FmtHeader, Int](2, toInt, (fmt, in) => fmt.copy(blockAlign = in)) andThen
+        HeaderProtocolEntryFixed[FmtHeader, Int](2, toInt, (fmt, in) => fmt.copy(bitsPerSample = in))
+    )
 
-    private val waveHeaderProtocol = (
+    private val waveHeaderProtocol: HeaderProtocolEntry[WavHeader] = (
         HeaderProtocolEntryFixed[WavHeader, String](4, toStr, (wh, in) => wh.copy(riff = in)) andThen
         HeaderProtocolEntryFixed[WavHeader, Int](4, toInt, (wh, in) => wh.copy(size = in)) andThen
         HeaderProtocolEntryFixed[WavHeader, String](4, toStr, (wh, in) => wh.copy(wave = in)) andThen
-        HeaderProtocolEntryFixed[WavHeader, String](4, toStr, (wh, in) => wh.copy(fmt = wh.fmt.copy(fmt = in.trim()))) andThen
-        HeaderProtocolEntryFixed[WavHeader, Int](4, toInt, (wh, in) => wh.copy(fmt = wh.fmt.copy(fmtSize = in))) andThen
-        HeaderProtocolEntryFixed[WavHeader, Int](2, toInt, (wh, in) => wh.copy(fmt = wh.fmt.copy(audioFormat = in))) andThen
-        HeaderProtocolEntryFixed[WavHeader, Int](2, toInt, (wh, in) => wh.copy(fmt = wh.fmt.copy(numChannels = in))) andThen
-        HeaderProtocolEntryFixed[WavHeader, Int](4, toInt, (wh, in) => wh.copy(fmt = wh.fmt.copy(sampleRate = in))) andThen
-        HeaderProtocolEntryFixed[WavHeader, Int](4, toInt, (wh, in) => wh.copy(fmt = wh.fmt.copy(byteRate = in))) andThen
-        HeaderProtocolEntryFixed[WavHeader, Int](2, toInt, (wh, in) => wh.copy(fmt = wh.fmt.copy(blockAlign = in))) andThen
-        HeaderProtocolEntryFixed[WavHeader, Int](2, toInt, (wh, in) => wh.copy(fmt = wh.fmt.copy(bitsPerSample = in))) andThen
+        new ComposeProtocolEntry[FmtHeader](fmtHeaderProtol, FmtHeader.empty(), (wph, fmt) => wph.copy(fmt = fmt)) andThen
         new FmtExtraParamParser() andThen
         new DiscardUnknownChunks() andThen
         new DataParser()
